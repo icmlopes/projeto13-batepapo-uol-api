@@ -1,47 +1,56 @@
 import dayjs from "dayjs";
 import { messagesCollection, participantsCollection } from "../database/db.js";
 
+export async function postParticipants(req, res) {
+  const { name } = req.body;
 
-export async function postParticipants( req, res){
+  const participantFormat = {
+    name,
+    lastStatus: Date.now(),
+  };
 
-    const {name} = req.body
+  const messageFormat = {
+    from: name,
+    to: "Todos",
+    text: "Entrou na sala...",
+    type: "status",
+    time: dayjs().format("HH:mm:ss"),
+  };
 
-    const participantFormat = ({
-        name,
-        lastStatus: Date.now(),
-    })
+  try {
+    await participantsCollection.insertOne(participantFormat);
+    res.status(201).send("Successfully added participant");
 
-    const messageFormat = ({
-        from: name,
-        to: "Todos",
-        text: "Entrou na sala...",
-        type: "status",
-        time: dayjs().format("HH:mm:ss")
-    })
-
-    console.log("oooo porra")
-    console.log(participantFormat)
-
-    try{
-
-        await participantsCollection.insertOne(participantFormat)
-        res.status(201).send("Successfully added participant")
-
-        await messagesCollection.insertOne(messageFormat)
-        res.send(201).send("Participant successfully joined the room...")
-
-    }catch(err){
-        console.error(err);
-    }
+    await messagesCollection.insertOne(messageFormat);
+    return res.status(201).send("Participant successfully joined the room...");
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
 }
 
-export async function getParticipants(req, res){
+export async function getParticipants(req, res) {
+  try {
+    const showParticipants = await participantsCollection.find({}).toArray();
+    return res.send(showParticipants);
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
+}
 
-    try{
-        const showParticipants = await participantsCollection.find({}).toArray()
-        return res.send(showParticipants)
-    } catch (error){
-        console.log(error);
-        res.sendStatus(500)
+export async function removeParticipants() {
+  const showParticipants = await participantsCollection.find({}).toArray();
+
+  const currentTime = Date.now();
+
+  console.log(showParticipants);
+
+  showParticipants.map((participant) => {
+    if (participant.lastStatus < currentTime - 10000) {
+      participantsCollection.deleteMany(participant);
     }
+  });
+  console.log("Participantes");
+  console.log(showParticipants);
 }

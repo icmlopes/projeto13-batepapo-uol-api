@@ -1,9 +1,12 @@
-import joi from "joi"
+import { Router } from "express"
+import { getMessage, postMessage } from "../controllers/messagesController.js"
+import { messagesSchemaValidation } from "../middlewares/messageValidationMiddleware.js"
 
-export const messageSchema =  joi.object({
-    from: joi.string().min(3).required(),
-    to: joi.string(),
-    text: joi.string(),
-    type: joi.string(),
-    time: joi.string().required()
-})
+
+const router = Router()
+
+router.post("/messages",messagesSchemaValidation, postMessage)
+router.get("/messages", getMessage)
+
+
+export default router
